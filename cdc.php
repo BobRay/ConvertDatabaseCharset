@@ -2,11 +2,14 @@
 /*
 Script Name: ConvertDbCharset (CDC)
 
-Copyright 2007  Anders Stalheim Oefsdahl  (email : anders@apt.no)
-Conversion by Bob Ray (bobray@softville.com) 2010
+
+@author Bob Ray (<http://bobsguides.com) 2010, updated 2012
+
+This PHP script is based on a script by Anders Stalheim Oefsdahl for converting a WordPress database to UTF-8. Copyright 2007  Anders Stalheim Oefsdahl  (email : anders@apt.no)
+
 Detail at http://www.mydigitallife.info/2007/07/22/how-to-convert-character-set-and-collation-of-wordpress-database/
 
-This PHP script is based on a script by Anders Stalheim Oefsdahl for converting a WordPress database to UTF-8. It should convert any database to any charset/collation. Set the variables at the beginning of the script to the appropriate values for your database.
+ It should convert any database to any charset/collation. Set the variables at the beginning of the script to the appropriate values for your database.
 
 Bug fix by My Digital Life on 22 June 2007.
 
@@ -27,28 +30,30 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 
-/* set these to match your database credentials */
+/* Create a cdc.config.php file based on cdc.config.sample.php and set the variables in that file */
 
-$host = 'localhost';
-$dbName = 'YourDbName';
-$userName = 'YourDbUserName';
-$password = 'YouDbPassword';
+require 'cdc.config.php';
 
-$targetCharset = 'utf8';
-$targetCollation = 'utf8_general_ci';
-$cdc_debug = 0;
+$headerOutput = '';
+$errorOutput = '';
+$sqlOutput = '';
+$debugOutput = '';
 
-include 'cdc.config.php';
+addLine($headerOutput, 'Convert Database Charset');
 
-echo '<h3>Convert Database Charset</h3>';
-echo '<p>Note: Running this script will not alter your database in any way. It simply generates SQL queries that you can use to make the changes. Nothing is changed until you paste the SQL statements into PhpMyAdmin and click on "Go." Be sure you have selected the database (rather than a single table) before you click on the SQL tab in PhpMyAdmin and paste the queries.</p>';
-echo '<p><b>BACK UP your database before altering it!!!</b></p>';
-echo "Set the variables at the beginning of the script to the appropriate values for your database.</p>";
-echo "<p>The script generates a very long SQL statement that can be pasted into the SQL window in PhpMyAdmin to do the conversion on your database by temporarily setting just the text-containing fields to BLOB, changing the table's charset, and setting them back to their respective types. Indexes (including compound indexes), Defaults, Null settings, Unique settings, and comments are automatically preserved.</p>";
-echo '<p>If a table has multiple indexes, the script may also make harmless changes in the order of some of those indexes. It will not change the order of components of a compound index. Text-based foreign keys (though very rare and generally a bad idea) may cause trouble.</p>';
+addLine($headerOutput, "Note: Running this script will not alter your database in any way. It simply generates SQL queries that you can use to make the changes. Nothing is changed until you paste the SQL statements into PhpMyAdmin and click on \"Go.\" Be sure you have selected the database (rather than a single table) before you click on the SQL tab in PhpMyAdmin and paste the queries.\n");
 
-echo "<p><b>Important: Be sure any site using the database is offline (e.g. by renaming index.php) before executing the SQL statements in PhpMyAdmin!</b></p>";
-echo "DB name: ".$dbName."<br />";
+addLine($headerOutput, "BACK UP your database before altering it!!!\n");
+
+addLine($headerOutput, "create a cdc.config.php file based on the cdc.config.sample.php file and set the variables at the beginning of the file to the appropriate values for your database.\n");
+
+addLine($headerOutput, "The script generates a very long SQL statement that can be pasted into the SQL window in PhpMyAdmin to do the conversion on your database by temporarily setting just the text-containing fields to BLOB, changing the table's charset, and setting them back to their respective types. Indexes (including compound indexes), Defaults, Null settings, Unique settings, and comments are automatically preserved.\n");
+
+addLine($headerOutput, "If a table has multiple indexes, the script may also make harmless changes in the order of some of those indexes. It will not change the order of components of a compound index. Text-based foreign keys (though very rare and generally a bad idea) may cause trouble.\n");
+
+addLine($headerOutput, "IMPORTANT: Be sure any site using the database is offline (e.g. by renaming index.php) before executing the SQL statements in PhpMyAdmin!\n");
+
+addLine($headerOutput, "DB name: ".$dbName."\n");
 
 
 /* connect and select DB */
@@ -79,7 +84,7 @@ $sql_tables = "SHOW TABLES";
 $res_tables = getResults($sql_tables, $connection);
 
 if ($cdc_debug) {
-    echo '<br />TABLES:' . '<br />';
+    addline($debugOutput, "\nTABLES:");
 }
 
 $field = "Tables_in_".$dbName;
@@ -87,7 +92,7 @@ if( is_array( $res_tables ) ){
     foreach( $res_tables as $res_table ){
         $tables[$res_table->$field] = array();
         if ($cdc_debug) {
-            echo $res_table->$field . '<br />';
+            addline($debugOutput, $res_table->$field);
         }
     }
 }
@@ -105,8 +110,8 @@ if( count( $tables )>0 ){
         }
         $multiples = array();
         if ($cdc_debug) {
-            echo "<br /><br />******************************************************************<br>TABLE: ".$table;
-            echo"<br />******************************************************************";
+            addLine($debugOutput, "******************************************************************\nTABLE: ".$table .
+            "\n******************************************************************\n");
         }
 
         $sql_fields = "SHOW FULL COLUMNS FROM " . $table;
@@ -116,13 +121,12 @@ if( count( $tables )>0 ){
         $res_fields_index = getResults($sql_fields_index, $connection);
 
 if ($cdc_debug) {
-     echo '<pre><br /><br />';
-     echo 'RES FIELDS: <br / ';
-     print_r($res_fields);
-     echo '******************************************';
-     echo '<br />RES FIELDS INDEX<br />';
-     print_r($res_fields_index);
-     echo '</pre>';
+
+    addline($debugOutput, "\nRES FIELDS:\n");
+    addline($debugOutput,  print_r($res_fields,true)) ;
+    addline($debugOutput, "\n******************************************\n");
+    addline($debugOutput, "RES FIELDS INDEX\n");
+    addline($debugOutput, print_r($res_fields_index, true));
 }
 
 
@@ -154,9 +158,8 @@ if ($cdc_debug) {
       $multiples = array();
 
         if ($cdc_debug) {
-            echo '<br />IDX Array<pre>';
-            print_r($idxs);
-            echo '<br /></pre>';
+            addline($debugOutput, "\nIDX Array\n");
+            addline($debugOutput, print_r($idxs, true));
         }
 
       /* create the string used for a compound index */
@@ -172,9 +175,8 @@ if ($cdc_debug) {
 
 if ($cdc_debug) {
      if (! empty($multiples[$idx['Keyname']])) {
-        echo '<br />' . $table . ' Compound Keys: <pre>';
-        print_r($multiples);
-        echo '<br /></pre>';
+         addline($debugOutput, $table . "\nCompound Keys:");
+         addline($debugOutput, print_r($multiples, true));
      }
 
 }
@@ -182,7 +184,7 @@ if ($cdc_debug) {
         /* foreach text field - create appropriate DROP/ADD index SQL and SQL to restore comments, UNIQUE, DEFAULT, and NOT NULL */
         if( is_array( $res_fields ) ){
             if ($cdc_debug) {
-                echo '<br />TEXT FIELDS:<br />';
+                addline($debugOutput, "\nTEXT FIELDS:");
             }
             $done = array();
             foreach( $res_fields as $field ){
@@ -199,7 +201,7 @@ if ($cdc_debug) {
                     case strpos( strtolower( $field->Type ), 'longtext' )===0:
                         $tables[$table][$field->Field] = $field->Type;
                         if ($cdc_debug) {
-                            echo '<br />    Field: ' . $field->Field . " " . $field->Type . ', Key:' . $field->Key;
+                            addline($debugOutput, 'Field: ' . $field->Field . " " . $field->Type . ', Key:' . $field->Key);
                         }
 
                         /* add SQL to convert field to BLOB and back again */
@@ -235,9 +237,9 @@ if ($cdc_debug) {
 
 
                          if( ! empty($field->Key)) {
-                            if ($cdc_debug) {
+                            /*if ($cdc_debug) {
                                 echo "  *** It's a key -- i=".$i.", Keyname = ".$field->Field . ', Null = ' . $field->Null . ', Default = ' . $field->Default . ', Name = ' . $field->Name;
-                            }
+                            }*/
 
                             foreach($res_fields_index as $index_item) {     // walk though the indexes until we find it.
                                 if ($index_item->Column_name == $field->Field) {
@@ -245,7 +247,7 @@ if ($cdc_debug) {
                                     $key=$index_item->Key_name;
                                     $column=$index_item->Column_name;
                                     if ($cdc_debug) {
-                                        echo ", indexName = ".$key.", ColumnName=".$column."<br>";
+                                        addline($debugOutput, ", indexName = ".$key.", ColumnName=".$column."\n");
                                     }
                                     break; // new
                                 }
@@ -317,16 +319,15 @@ if ($cdc_debug) {
                 } /* end switch */
             }  /* end foreach $res_fields */
         } else {  /* end if (is_array($res_fields)) */
-                       echo '<br /> ***************** $res_fields is not an Array *********************** <br />';
+            addLine($errorOutput, "***************** $res_fields is not an Array ***********************");
         }
 
     }  /* end foreach $tables */
 } /* end if( count( $tables )>0 ) */
 
 if ($cdc_debug) {
-    echo '<br />MULTIPLES: <br /><pre>';
-    print_r($multiples);
-    echo '<br /></pre>';
+    addline($debugOutput, "\nMULTIPLES:");
+    addline($debugOutput, print_r($multiples, true) . "\n\n");
 }
 
 mysql_close($connection);
@@ -337,8 +338,39 @@ foreach( $tables as $table=>$fields ){
 
 $complete_sql = $sql_drop_indexes . $sql_to_blob . "\nALTER DATABASE " . $dbName." CHARSET " . $targetCharset ." COLLATE " . $targetCollation . ";". $sql_to_target . $sql_to_original . $sql_fix_fields .  $sql_restore_indexes . $sql_restore_multiples;
 
-echo "<h3>SQL to paste into PhpMyAdmin (paste the whole block):</h3>";
-echo nl2br( $complete_sql );
+if ($showHeaders) {
+    $headerOutput = "Change Database Charset for DB: " . $dbName . "\n\n" . $headerOutput;
+    $complete_sql = "SQL to paste into PhpMyAdmin (paste the whole block):\n" . $complete_sql;
+    $debugOutput = "\nDebugging Information\n" . $debugOutput;
+}
+
+if ($convertNewlines) {
+    $headerOutput = nl2br($headerOutput);
+    $errorOutput = nl2br($errorOutput);
+    $complete_sql = nl2br($complete_sql);
+    $debugOutput = nl2br($debugOutput);
+}
+
+if ($cdc_debug) {
+    echo $debugOutput;
+}
+
+if ($showHeaders) {
+    echo $headerOutput;
+}
+if (!empty($errorOutput)) {
+    $msg = "\n\nErrors\n";
+    if ($convertNewlines) {
+        $msg = nl2br($msg);
+    }
+    echo $msg . $errorOutput;
+}
+
+if ($showSql) {
+    echo $complete_sql;
+}
+
+return '';
 
 function getResults($sql, $connection) {
 
@@ -361,7 +393,14 @@ function hasDuplicate($arr,$keyname) {
      }
   }
   return ($count >1);
+
 }
+
+/**
+ * @param $ds
+ * @param string $mode
+ * @return array|object|stdClass
+ */
 function getRow($ds, $mode = 'assoc') {
       if ($ds) {
          if ($mode == 'assoc') {
@@ -374,11 +413,12 @@ function getRow($ds, $mode = 'assoc') {
          elseif ($mode == 'both') {
             return mysql_fetch_array($ds, MYSQL_BOTH);
          } else {
-            global $modx;
-            $modx->messageQuit("Unknown get type ($mode) specified for fetchRow - must be empty, 'assoc', 'num' or 'both'.");
+            addError("Unknown get type ($mode) specified for fetchRow - must be empty, 'assoc', 'num' or 'both'.");
          }
       }
+    return null;
    }
+
 
 /* create string to use in compound indexes */
 function doCompound($idxs, $multiples, $keyName) {
@@ -389,4 +429,8 @@ function doCompound($idxs, $multiples, $keyName) {
         }
     }
     return implode(',',$temp);
+}
+
+function addLine(&$target, $msg) {
+    $target .= $msg . "\n";
 }
