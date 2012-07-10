@@ -38,6 +38,7 @@ $targetCharset = 'utf8';
 $targetCollation = 'utf8_general_ci';
 $cdc_debug = 0;
 
+include 'cdc.config.php';
 
 echo '<h3>Convert Database Charset</h3>';
 echo '<p>Note: Running this script will not alter your database in any way. It simply generates SQL queries that you can use to make the changes. Nothing is changed until you paste the SQL statements into PhpMyAdmin and click on "Go." Be sure you have selected the database (rather than a single table) before you click on the SQL tab in PhpMyAdmin and paste the queries.</p>';
@@ -163,7 +164,7 @@ if ($cdc_debug) {
      foreach($idxs as $idx) {
          if (hasDuplicate($idxs, $idx['Keyname'])) {
              if (empty($multiples[$idx['Keyname']])) {
-                $s = doCompound ($idxs, & $multiples, $idx['Keyname']);
+                $s = doCompound ($idxs, $multiples, $idx['Keyname']);
                 $multiples[$idx['Keyname']] = $s;
              }
          }
@@ -389,4 +390,3 @@ function doCompound($idxs, $multiples, $keyName) {
     }
     return implode(',',$temp);
 }
-?>
