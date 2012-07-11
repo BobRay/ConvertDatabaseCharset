@@ -1,15 +1,13 @@
 <?php
 /*
-Script Name: ConvertDbCharset (CDC)
+Script Name: cdc.php  (Convert Database Charset)
 
 
-@author Bob Ray (<http://bobsguides.com) 2010, updated 2012
+@author Bob Ray (<http://bobsguides.com) 2010, updated July 2012
 
 This PHP script is based on a script by Anders Stalheim Oefsdahl for converting a WordPress database to UTF-8. Copyright 2007  Anders Stalheim Oefsdahl  (email : anders@apt.no)
 
 Detail at http://www.mydigitallife.info/2007/07/22/how-to-convert-character-set-and-collation-of-wordpress-database/
-
- It should convert any database to any charset/collation. Set the variables at the beginning of the script to the appropriate values for your database.
 
 Bug fix by My Digital Life on 22 June 2007.
 
@@ -30,7 +28,126 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 
-/* Create a cdc.config.php file based on cdc.config.sample.php and set the variables in that file */
+/*
+
+  This script should convert any database to any charset/collation.
+  Set the variables in the config file to the appropriate values
+  for your database.
+
+  The script will *not* alter your database. It produces the SQL to
+  do so. You can then paste the SQL code into the SQL tab of
+  PhpMyAdmin to alter the database. Be sure to back up the DB first.
+
+  See the full tutorial and documentation at: http://bobsguides.com/convert-db-utf8.html
+
+  Usage:
+
+  Create a cdc.config.php file based on cdc.config.sample.php
+  and set the variables in that file.
+
+  You can execute the scrip in a code editor (e.g. NetBeans, PhpED, PhpStorm),
+  in a browser (by double-clicking on the file),
+  or from the command line php path/to/cdc.php
+
+  If you will be executing it in a browser, set the $convertNewlines
+  variable to true in the config file.
+
+
+*/
+
+/**
+ * Execute MySQL query and put results in an array
+ *
+ * @param $sql string - query string
+ * @param $connection - handle to DB connection
+ * @return array - array of result objects
+ */
+function getResults($sql, $connection) {
+    $final = array();
+    $result = mysql_query($sql, $connection);
+
+    $num_rows = 0;
+
+    while ($row = getRow($result) ) {
+          $final[$num_rows] = $row;
+          $num_rows++;
+    }
+    return $final;
+}
+
+/**
+ * Check for duplicate keys
+ *
+ * @param $arr array - array of keys
+ * @param $keyname string - name of key
+ * @return bool - returns true if key is a duplicate
+ */
+function hasDuplicate($arr,$keyname) {
+  $count = 0;
+  foreach ($arr as $row) {
+     if ($row['Keyname'] === $keyname) {
+       $count++;
+     }
+  }
+  return ($count >1);
+
+}
+
+/**
+ * Fetch a row or object  as an associative array
+ *
+ * @param $ds object - query result object
+ * @param string $mode
+ * @return array|object|stdClass - (returns null on failure)
+ */
+function getRow($ds, $mode = 'assoc') {
+      if ($ds) {
+         if ($mode == 'assoc') {
+           // return mysql_fetch_assoc($ds);
+            return mysql_fetch_object($ds);
+         }
+         elseif ($mode == 'num') {
+            return mysql_fetch_row($ds);
+         }
+         elseif ($mode == 'both') {
+            return mysql_fetch_array($ds, MYSQL_BOTH);
+         } else {
+            addError("Unknown get type ($mode) specified for fetchRow - must be empty, 'assoc', 'num' or 'both'.");
+         }
+      }
+    return null;
+   }
+
+
+
+/**
+ * Create string to use in compound indexes
+ *
+ * @param $idxs array - array of indexes
+ * @param $multiples array - array of compound indexes
+ * @param $keyName - name of key
+ * @return string - SQL string component
+ */
+function doCompound($idxs, $multiples, $keyName) {
+    /* use sequence number to order subindexes */
+    foreach($idxs as $idx) {
+        if ($idx['Keyname'] == $keyName) {
+            $temp[$idx['Seqnumber']] = '`' . $idx['Columname'] . '`';
+        }
+    }
+    return implode(',',$temp);
+}
+
+/**
+ * Add a line to one of the output strings ($headerOutput, $errorOutput, $debugOutput)
+ *
+ * @param $target string - one of the three strings above
+ * @param $msg string - text to add
+ */
+function addLine(&$target, $msg) {
+    $target .= $msg . "\n";
+}
+
 
 require 'cdc.config.php';
 
@@ -38,6 +155,10 @@ $headerOutput = '';
 $errorOutput = '';
 $sqlOutput = '';
 $debugOutput = '';
+
+
+
+
 
 addLine($headerOutput, 'Convert Database Charset');
 
@@ -49,7 +170,7 @@ addLine($headerOutput, "create a cdc.config.php file based on the cdc.config.sam
 
 addLine($headerOutput, "The script generates a very long SQL statement that can be pasted into the SQL window in PhpMyAdmin to do the conversion on your database by temporarily setting just the text-containing fields to BLOB, changing the table's charset, and setting them back to their respective types. Indexes (including compound indexes), Defaults, Null settings, Unique settings, and comments are automatically preserved.\n");
 
-addLine($headerOutput, "If a table has multiple indexes, the script may also make harmless changes in the order of some of those indexes. It will not change the order of components of a compound index. Text-based foreign keys (though very rare and generally a bad idea) may cause trouble.\n");
+addLine($headerOutput, "If a table has multiple indexes, the script may also make harmless changes in the order of some of those indexes. It will not change the order of components of a compound index. Text-based foreign  keys and constraints (though very rare and generally a bad idea) may cause trouble.\n");
 
 addLine($headerOutput, "IMPORTANT: Be sure any site using the database is offline (e.g. by renaming index.php) before executing the SQL statements in PhpMyAdmin!\n");
 
@@ -105,6 +226,7 @@ if( is_array( $res_tables ) ){
  */
 if( count( $tables )>0 ){
     foreach( $tables as $table=>$fields ){
+
         if ($table == 'modx_user_settings') {
             $x = 1;
         }
@@ -118,7 +240,9 @@ if( count( $tables )>0 ){
 
         $sql_fields_index = "SHOW INDEX FROM ".$table;
         $res_fields = getResults($sql_fields, $connection);
+
         $res_fields_index = getResults($sql_fields_index, $connection);
+
 
 if ($cdc_debug) {
 
@@ -129,10 +253,10 @@ if ($cdc_debug) {
     addline($debugOutput, print_r($res_fields_index, true));
 }
 
+$fieldLength = array();
 
-
-
-     /* convert stdObject $res_fields_indes to an abbreviated array */
+     /* convert stdObject $res_fields_index to an abbreviated array
+        for use in handling compound keys */
      $idxs = array();
      $i=0;
      if (is_array($res_fields_index) ) { /* skip if table has no index */
@@ -237,22 +361,20 @@ if ($cdc_debug) {
 
 
                          if( ! empty($field->Key)) {
-                            /*if ($cdc_debug) {
-                                echo "  *** It's a key -- i=".$i.", Keyname = ".$field->Field . ', Null = ' . $field->Null . ', Default = ' . $field->Default . ', Name = ' . $field->Name;
-                            }*/
-
                             foreach($res_fields_index as $index_item) {     // walk though the indexes until we find it.
                                 if ($index_item->Column_name == $field->Field) {
 
                                     $key=$index_item->Key_name;
                                     $column=$index_item->Column_name;
+                                    /* set this for use with keys that have a size set */
+                                    $length=$index_item->Sub_part;
                                     if ($cdc_debug) {
                                         addline($debugOutput, ", indexName = ".$key.", ColumnName=".$column."\n");
                                     }
-                                    break; // new
+                                    break;
                                 }
                             }
-                            /* handle compound indexes (in the $multiples array created earlier).
+                            /* Handle compound indexes (in the $multiples array created earlier).
                              * Note: This only happens for compound indexes with text fields in them.
                              * Other compound indexes won't be dropped in the first place.
                              */
@@ -264,6 +386,7 @@ if ($cdc_debug) {
                                 if ($table == 'modx_context_resource') {
                                     $x = 1;
                                 }
+
                                $prefix = "\nALTER TABLE ". $table . ' ADD ';
                                $type = $index_item->Index_type;
                                $extra = '';
@@ -296,16 +419,20 @@ if ($cdc_debug) {
                                  *  */
                                 }
                                 if ($key != 'PRIMARY') {
+                                    /* set this for use with keys that have a size set,
+                                       will be empty if they don't */
+                                    $indexLength = $length? '(' . $length . ')' : '';
 
                                     if ($field->Key== 'UNI' || $field->Key == 'PRI') {
-                                        $sql_restore_indexes .= "\nALTER TABLE ".$table." ADD UNIQUE ". '`'. $key . '`'."(". '`' . $column. '`'.")".";";
+                                        $sql_restore_indexes .= "\nALTER TABLE ".$table." ADD UNIQUE ". '`'. $key . '`'."(". '`' . $column. $indexLength . '`'.")".";";
                                     } elseif ($index_item->Index_type == 'FULLTEXT') {
-                                        $sql_restore_indexes .= "\nALTER TABLE ".$table." ADD FULLTEXT ". '`' . $key. '`'."(". '`' . $column . '`' .")".";";
+                                        $sql_restore_indexes .= "\nALTER TABLE ".$table." ADD FULLTEXT ". '`' . $key. '`'."(". '`' . $column . $indexLength . '`' .")".";";
                                     } else {
-                                        $sql_restore_indexes .= "\nALTER TABLE ".$table." ADD INDEX ". '`' . $key. '`'."(". '`' . $column . '`' .")".";";
+
+                                        $sql_restore_indexes .= "\nALTER TABLE ".$table." ADD INDEX ". '`' . $key. '`'."(". '`' . $column . '`' . $indexLength  .")".";";
                                     }
                                 } else {
-                                    $sql_restore_indexes .= "\nALTER TABLE ".$table." ADD PRIMARY KEY ". "(". '`' . $column . '`' .")".";";
+                                    $sql_restore_indexes .= "\nALTER TABLE ".$table." ADD PRIMARY KEY ". "(". '`' . $column . $indexLength . '`' .")".";";
                                 }
                             }
                         }
@@ -344,6 +471,8 @@ if ($showHeaders) {
     $debugOutput = "\nDebugging Information\n" . $debugOutput;
 }
 
+/* Convert newlines to <br /> if set in config */
+
 if ($convertNewlines) {
     $headerOutput = nl2br($headerOutput);
     $errorOutput = nl2br($errorOutput);
@@ -351,13 +480,17 @@ if ($convertNewlines) {
     $debugOutput = nl2br($debugOutput);
 }
 
+/* Show debug output if set in config */
 if ($cdc_debug) {
     echo $debugOutput;
 }
 
+/* Show header message if set in config */
 if ($showHeaders) {
     echo $headerOutput;
 }
+
+/* Show errors (if any) */
 if (!empty($errorOutput)) {
     $msg = "\n\nErrors\n";
     if ($convertNewlines) {
@@ -366,71 +499,9 @@ if (!empty($errorOutput)) {
     echo $msg . $errorOutput;
 }
 
+/* Show SQL if set in config */
 if ($showSql) {
     echo $complete_sql;
 }
 
 return '';
-
-function getResults($sql, $connection) {
-
-    $result = mysql_query($sql, $connection);
-
-    $num_rows = 0;
-
-    while ($row = getRow($result) ) {
-          $final[$num_rows] = $row;
-          $num_rows++;
-    }
-    return $final;
-}
-
-function hasDuplicate($arr,$keyname) {
-  $count = 0;
-  foreach ($arr as $row) {
-     if ($row['Keyname'] === $keyname) {
-       $count++;
-     }
-  }
-  return ($count >1);
-
-}
-
-/**
- * @param $ds
- * @param string $mode
- * @return array|object|stdClass
- */
-function getRow($ds, $mode = 'assoc') {
-      if ($ds) {
-         if ($mode == 'assoc') {
-           // return mysql_fetch_assoc($ds);
-            return mysql_fetch_object($ds);
-         }
-         elseif ($mode == 'num') {
-            return mysql_fetch_row($ds);
-         }
-         elseif ($mode == 'both') {
-            return mysql_fetch_array($ds, MYSQL_BOTH);
-         } else {
-            addError("Unknown get type ($mode) specified for fetchRow - must be empty, 'assoc', 'num' or 'both'.");
-         }
-      }
-    return null;
-   }
-
-
-/* create string to use in compound indexes */
-function doCompound($idxs, $multiples, $keyName) {
-    /* use sequence number to order subindexes */
-    foreach($idxs as $idx) {
-        if ($idx['Keyname'] == $keyName) {
-            $temp[$idx['Seqnumber']] = '`' . $idx['Columname'] . '`';
-        }
-    }
-    return implode(',',$temp);
-}
-
-function addLine(&$target, $msg) {
-    $target .= $msg . "\n";
-}
