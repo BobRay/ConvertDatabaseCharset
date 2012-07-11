@@ -52,6 +52,18 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   variable to true in the config file.
 */
 
+/** @var string $host */
+/** @var string $userName */
+/** @var string $password*/
+/** @var string $dbName */
+/** @var string $targetCharset */
+/** @var string $targetCollation */
+/** @var boolean $showHeaders */
+/** @var boolean $cdc_debug */
+/** @var boolean $convertNewlines */
+/** @var boolean $showSql */
+
+
 /**
  * Execute MySQL query and put results in an array
  *
@@ -129,7 +141,9 @@ function getRow($ds, $mode = 'assoc')
  */
 function doCompound($idxs, $multiples, $keyName)
 {
+    $temp = array();
     /* use sequence number to order subindexes */
+
     foreach ($idxs as $idx) {
         if ($idx['Keyname'] == $keyName) {
             $temp[$idx['Seqnumber']] = '`' . $idx['Columname'] . '`';
@@ -294,7 +308,7 @@ if (count($tables) > 0) {
         } /* end foreach $idxs */
 
         if ($cdc_debug) {
-            if (!empty($multiples[$idx['Keyname']])) {
+            if (!empty($multiples)) {
                 addline($debugOutput, $table . "\nCompound Keys:");
                 addline($debugOutput, print_r($multiples, true));
             }
@@ -302,17 +316,19 @@ if (count($tables) > 0) {
         unset($idxs);
         /* foreach text field - create appropriate DROP/ADD index SQL
            and SQL to restore comments, UNIQUE, DEFAULT, and NOT NULL */
+        $length = 0; /* for keys with size set */
+        $indexLength = ''; /* SQL string for length */
+        $column = '';  /* column name */
+        $key = '';     /* key name */
+        $index_item = new stdClass(); /* index being processed */
+
+
         if (is_array($res_fields)) {
             if ($cdc_debug) {
                 addline($debugOutput, "\nTEXT FIELDS:");
             }
             $done = array();
             foreach ($res_fields as $field) {
-                $length = 0;
-                $column = '';
-                $key = '';
-                $index_item = new stdClass();
-                $indexLength = 0;
                 switch (TRUE) {
 
                     case strpos(strtolower($field->Type), 'char') === 0:
@@ -373,13 +389,13 @@ if (count($tables) > 0) {
 
                         if (!empty($field->Key)) {
                             /* walk though the indexes until we find it. */
-                            foreach ($res_fields_index as $index_item) {
-                                if ($index_item->Column_name == $field->Field) {
-
-                                    $key = $index_item->Key_name;
-                                    $column = $index_item->Column_name;
+                            foreach ($res_fields_index as $item) {
+                                if ($item->Column_name == $field->Field) {
+                                    $index_item = $item;
+                                    $key = $item->Key_name;
+                                    $column = $item->Column_name;
                                     /* set this for use with keys that have a size set */
-                                    $length = $index_item->Sub_part;
+                                    $length = $item->Sub_part;
                                     if ($cdc_debug) {
                                         addline($debugOutput, ", indexName = " . $key . ", ColumnName=" . $column . "\n");
                                     }
@@ -474,7 +490,6 @@ if (count($tables) > 0) {
         } else { /* end if (is_array($res_fields)) */
             addLine($errorOutput, "***************** $res_fields is not an Array ***********************");
         }
-
     } /* end foreach $tables */
 } /* end if( count( $tables )>0 ) */
 
@@ -483,7 +498,9 @@ if ($cdc_debug) {
     addline($debugOutput, print_r($multiples, true) . "\n\n");
 }
 
+unset($res_fields,$res_fields_index, $res_table, $res_tables,$multiples);
 mysql_close($connection);
+
 
 foreach ($tables as $table => $fields) {
     $sql_to_target .= "\nALTER TABLE " . $table . " DEFAULT CHARACTER SET " .
