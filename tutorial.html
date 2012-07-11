@@ -1,12 +1,22 @@
-<p>Having mismatched character sets and collations can cause all kinds of weird display problems on a web site. The default character set for MySQL is <fixedpre>latin1</fixedpre> and the default collation is <fixedpre>latin1_swedish_ci</fixedpre>. If your CMS is using <fixedpre>utf8</fixedpre>, weird characters can appear in the output (especially for foreign-language words with accents) and sometimes searches will fail for unknown reasons.</p>
+<p>Having mismatched character sets and collations can cause all kinds of weird display problems on a web site. The default character set for MySQL is <fixedpre>latin1</fixedpre> and the default collation is <fixedpre>latin1_swedish_ci</fixedpre>. If your CMS is using <fixedpre>utf8</fixedpre>, weird characters can appear in the output (especially for foreign-language words with accents) and sometimes searches will fail for unknown reasons. Most experienced users recommend using <fixedpre>utf8</fixedpre> for everything.</p>
 
-<p>I've tried converting databases from latin1 to utf8 several times over the last two years using various scripts available on the web, with no great success and often a lot of grief. Most existing scripts do the conversion but require you to drop indexes manually and often lose comments and some field characteristics (e.g. NOT NULL, UNIQUE, DEFAULT). This script drops and adds the indexes automatically and preserves the field information (including compound-key indexes).</p>
+<p>I've tried converting databases from latin1 to utf8 several times over the last two years using various scripts available on the web. I had no great success and often a lot of grief. Most existing scripts do the conversion but require you to drop and restore indexes manually and often lose comments and some field characteristics (e.g. NOT NULL, UNIQUE, DEFAULT).</p>
 
 <p>I finally wrote my own script to do it. The script in this package should convert from any charset/collation
-to any other charset/collation. By default it converts the current charset/collation to utf8/utf8_general_ci.</p>
+to any other charset/collation. By default it converts the current charset/collation to utf8/utf8_general_ci.  The script drops and adds the indexes automatically and preserves the field information (including compound-key indexes).</p>
 
-<p>Full disclosure: I consider character sets to be a black art, so I can't claim I fully understand this process.
-I'm not sure all the steps are necessary, but the method worked for me and a number of others. YMMV.</p>
+<p>Full disclosure: I consider character sets to be a black art, and don't can't claim to fully understand them.
+This script has always worked for me and for a number of others. YMMV.</p>
+
+<div class="box">
+    <p>Upgrade note: This script updated in July of 2012. It should no longer fail on indexes with a size setting smaller than the field size. It was tested on the database for MODX 2.2.4 and now handles the new uri index properly.</p>
+</div>
+
+<p>MODX users: This script is meant to run outside of MODX and is not recommended for use in a MODX snippet or plugin. Clear the site cache before starting. Before Exporting your database go into the Manager and empty the error log and the manager action log (not strictly necessary, but it will make it easier on the server). </p>
+
+<p>Other CMS users: Do not run this script inside your CMS &mdash; run it as a standalone script. There is nothing MODX-specific about this script and it should convert your database, but I haven't tested it with anything but MODX.</p>
+
+
 
 <h3>Quick and Daring Method</h3>
 
@@ -14,12 +24,11 @@ I'm not sure all the steps are necessary, but the method worked for me and a num
 
 <ol>
     <li>Back up your database by selecting Export in PhpMyAdmin and save to a file.</li>
-    <li>Create a file called cdc.config.php based on the config.cdc.sample.php file.</li>
+    <li>Create a file called <fixedpre>cdc.config.php</fixedpre> based on the <fixedpre>config.cdc.sample.php</fixedpre> file (in the same directory).</li>
     <li>Set the appropriate variables in the config file.</li>
     <li>Make sure the database is not in use during the rest of this process.</li>
     <li>Execute the script in a code editor, in a browser, or from the command line.</li>
-    <li>If you use a browser, set <fixedpre>$convertNewlines</fixedpre> to true in the config file.</li>
-
+    <li>If you use a browser, set <fixedpre>$convertNewlines = true;</fixedpre> in the config file.</li>
     <li>In cPanel (or the equivalent) go into PhpMyAdmin and select your database.</li>
     <li>Paste the MySQL code into the SQL window of PhpMyAdmin and click on the &quot;Go&quot; button</li>
     <li>Be patient, it takes a while to run.</li>
@@ -30,28 +39,27 @@ I'm not sure all the steps are necessary, but the method worked for me and a num
 <h3>Safe Method (recommended)</h3>
 
 
-<p>This method will allow you to check the oonversion before using it.</p>
+<p>This method will allow you to check the conversion before using it.</p>
 
 <ol>
+<li>In cPanel (or the equivalent) go into PhpMyAdmin and select your database.</li>
 <li>Using PhpMyAdmin, &quot;Export&quot; the whole database to a local file using the default settings. Call the
-   file <fixedpre>original-latin1.sql</fixedpre>. Note that this file will serve as a backup of the database in case anything
-   goes wrong. Be careful not to overwrite or alter it!</li>
+   file <fixedpre>original-latin1.sql</fixedpre>. Note that this file will serve as a backup of the database in case anything goes wrong. Be careful not to overwrite or alter it!</li>
 
 <li>Important: Be sure the DB is not in use for the rest of this process.</li>
 
-<li>On the &quot;Operations&quot; tab of PhpMyAdmin, copy the database to a new database with a new name.
-   Use no hyphens in the DB name.</li>
+<li>On the &quot;Operations&quot; tab of PhpMyAdmin, copy the database to a new database with a new name. Use no hyphens in the DB name.</li>
 
-<li>Export this new database (as in step 1) to a file called <fixedpre>before.sql</fixedpre></li>
+<li>Export this new database (as in step 2) to a file called <fixedpre>before.sql</fixedpre></li>
 
 <li>(optional) using a diff program such as WinMerge, compare the <fixedpre>original-latin1.sql</fixedpre> file with the <fixedpre>before.sql</fixedpre> file. Except for the timestamp at the top, they should be identical.</li>
-<li>Create a file called <fixedpre>cdc.config.php</fixedpre> based on the <fixedpre>cdc.config.sample.php</fixedpre> file.</li>
+<li>Create a file called <fixedpre>cdc.config.php</fixedpre> based on the <fixedpre>cdc.config.sample.php</fixedpre> file (in the same directory).</li>
 
 <li>Edit the variables in the config file to match your database and desired charset/collation.</li>
 
-<li>If you will be executing the script in a browser, set <fixedpre>$convertNewlines=true</fixedpre> in the config file.</li>
+<li>If you will be executing the script in a browser, set <fixedpre>$convertNewlines = true;</fixedpre> in the config file.</li>
 
-<li>Run <fixedpre>cdc.php</fixedpre>, either in an editor, browser, or from the command line (<fixedpre>php cdc.php</fixedpre>). Do not run it from within a CMS that uses the database.</li>
+<li>Run <fixedpre>cdc.php</fixedpre>, either in an editor, browser, or from the command line (<fixedpre>php cdc.php</fixedpre>). Do *not* run it from within a CMS that uses the database. To make it easier to cut and paste, you may want to set <fixedpre>$showHeaders = false;</fixedpre> in the config file.</li>
 
 <li>Copy just the SQL query code to the clipboard. Make sure you get all of it and copy only the lines that start with <fixedpre>ALTER TABLE</fixedpre>.</li>
 
@@ -61,12 +69,12 @@ I'm not sure all the steps are necessary, but the method worked for me and a num
 
 <li>Be patient, it takes a while to run. You may or may not get a success message when it's finished. Sometimes you just see the SQL form go blank.</li>
 
-<li>Export the database to a local SQL file called <fixedpre>after.sql</fixedpre></li>
+<li>Export the database (as in step 2) to a local SQL file called <fixedpre>after.sql</fixedpre></li>
 
 <li>Use a diff program like WinMerge to compare the <fixedpre>original-latin1.sql</fixedpre> file and the <fixedpre>after.sql</fixedpre> file.
     (See the notes below.)</li>
 
-<li>If everything looks good, put the new database into use. In a CMS, edit your CMS' config file to use the new charset and the new database.</li>
+<li>If everything looks good, put the new database into use. In a CMS, edit your CMS' configuration to use the new charset and the new database (in MODX, modify the <fixedpre>config.inc.php</fixedpre> file).</li>
 
 <li>Use your database and check for anomalous characters.</li>
 
@@ -76,17 +84,23 @@ I'm not sure all the steps are necessary, but the method worked for me and a num
 
 <h3>Notes</h3>
 
-<p>NOTES: When you compare the original-latin1.sql and the after.sql files, you'll should see differences in the date and time line at the top and in the charset specifications. You may see that the order of some of the indexes has changed. This is normal and unavoidable. As long as they're all there, it's not a problem. It happens because the script has to drop some indexes and add them back. When they're added back, they may go at the end of the indexes. The actual fields in the tables should not have changed.</p>
+<p>When you compare the <fixedpre>original-latin1.sql</fixedpre> and the <fixedpre>after.sql</fixedpre> files, you should see differences in the date and time line at the top and in the charset specifications. You may see that the order of some of the indexes has changed. This is normal and unavoidable. As long as they're all there, it's not a problem. It happens because the script has to drop some indexes and add them back. When they're added back, they may go at the end of the indexes. The actual fields in the tables should not have changed.</p>
 
-<p>It's fairly common to have some extraneous characters in your database before and after conversion. Odd characters have a way of creeping into any MySQL database. Pasting text from Word or other Windows editors may give you some unusual apostrophes and quote marks (both single and double). Words "curly" quotes (aka "smart quotes") are an example. Usually, you can leave these alone since most modern browsers display them correctly. Generally speaking, you shouldn't edit anything unless it causes trouble in a displayed page.</p>
+<h3>Remaining Problems</h3>
 
-<p>If you have serious problems with characters that <i>do</i> show up in the display, you may need more drastic measures to fix them.</p>
+<p>The script will safely change the character encoding and collation of your database, but you may still have problems with strange characters in the database.</p>
+
+<p>It's fairly common to have some extraneous characters in your database before and after conversion. Odd characters have a way of creeping into any MySQL database. The script will solve problems directly related to encoding issues, but you may have other problems as well. The script won't delete oddball characters in the fields.</p>
+
+<p>Pasting text from Word or other text-editing programs may give you some unusual apostrophes and quote marks (both single and double). Word's &quot;curly&quot; quotes (aka &quot;smart quotes&quot;) are an example. Usually, you can leave these alone since most modern browsers display them correctly. Generally speaking, you shouldn't edit anything unless it causes trouble in a displayed page.</p>
+
+<p>If you have serious problems with characters that <i>do</i> show up in the display afer conversion, you may need more drastic measures to fix them.</p>
 
 <p>One method is to edit the Exported SQL file from the new database with a good editor (sometimes with a hex editor). Then create a new database with the proper encoding and collation and Import the SQL file to it. Don't edit anything unless you're sure you know it's wrong and what it should be. Don't edit anything but readable text.</p>
 
 <p>You may see odd characters as garbage at the end of some database fields. You can leave them alone.</p>
 
-<p>Sometimes you'll see extraneous characters that are not quotes or apostrophes -- most often, these are non-breaking spaces. They look like a capital A with a hat (^). Usually, these can be left alone. Be careful if you delete or replace them because they are a two-character sequence (C2 A0) and if you only delete one of them, the display will break at that point. Sometimes, in a regular editor, you can press delete twice to get rid of them and type a space. Sometimes, if you want them to be spaces, you'll need to use a hex editor and replace the C2 A0 combination with 20 (The space character).</p>
+<p>Sometimes you'll see extraneous characters that are not quotes or apostrophes &mdash; most often, these are non-breaking spaces. They look like a capital A with a hat (^). Usually, these can be left alone. Be careful if you delete or replace them because they are a two-character sequence (C2 A0) and if you only delete one of them, the display will break at that point. Sometimes, in a regular editor, you can press delete twice to get rid of them and type a space. Sometimes, if you want them to be spaces, you'll need to use a hex editor and replace the C2 A0 combination with 20 (The space character).</p>
 
 <p>With other odd characters, if you're sure you know what the text should be, you can just delete a section of text (delete the odd characters and one or two characters on each side of the odd ones to be sure) in a regular editor and retype it.</p>
 
@@ -98,9 +112,9 @@ Don't alter these or your Import will crash.</p>
 <p>Derek Sivers provides some good information <a href="http://www.oreillynet.com/onlamp/blog/2006/01/turning_mysql_data_in_latin1_t.html/">here</a> about using fairly exotic SQL queries to fix some of the problems (you can skip the first part of his article because the <fixepre>cdc.php</fixepre> script will have done that part for you).</p>
 
 
-<h3>Notes for MODX Users</h3>
+<h3>Final Notes for MODX Users</h3>
 
-<p>Clear the site cache before starting. Before Exporting your database go into the Manager and empty the error log and the manager action log (not strictly necessary, but it will make it easier on the server). After Importing the converted database, edit manager/includes/config.inc.php, or for MODX Revolution core/config/config.inc.php. Change the charset to <fixedpre>utf8</fixedpre> and change the name of the database to the new one. Important: be sure to clear the site cache and your browser cache before testing the new site.</p>
+<p>After Importing the converted database, edit the <fixedpre>manager/includes/config.inc.php</fixedpre> file, or for MODX Revolution, <fixedpre>core/config/config.inc.php</fixedpre>. Change the charset to <fixedpre>utf8</fixedpre> and change the name of the database to the new one. Important: be sure to clear the site cache and your browser cache before testing the new site.</p>
 
 <p>It's not a bad idea to do an upgrade install (be sure to uncheck all the options for installing snippets and the sample site in MODX Evolution).</p>
 
