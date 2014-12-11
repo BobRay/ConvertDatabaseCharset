@@ -218,9 +218,10 @@ $sql_restore_multiples = '';
 
 /* Create the array of tables */
 $tables = array();
-$sql_tables = "SHOW TABLES";
+$sql_tables = "SHOW FULL TABLES";
 $res_tables = getResults($sql_tables, $connection);
-
+addline($debugOutput, print_r($res_tables, true));
+// $cdc_debug = true;
 if ($cdc_debug) {
     addline($debugOutput, "\nTABLES:");
 }
@@ -228,7 +229,12 @@ if ($cdc_debug) {
 $field = "Tables_in_" . $dbName;
 if (is_array($res_tables)) {
     foreach ($res_tables as $res_table) {
+
+        if ($res_table->Table_type == 'VIEW') {
+            continue;
+        }
         $tables[$res_table->$field] = array();
+
         if ($cdc_debug) {
             addline($debugOutput, $res_table->$field);
         }
@@ -386,8 +392,8 @@ if (count($tables) > 0) {
 
                         }
 
-
-                        if (!empty($field->Key)) {
+//xxx
+                        if (!empty($field->Key) || (array_key_exists($field->Field, $multiples))) {
                             /* walk though the indexes until we find it. */
                             foreach ($res_fields_index as $item) {
                                 if ($item->Column_name == $field->Field) {
