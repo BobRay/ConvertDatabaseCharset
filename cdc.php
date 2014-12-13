@@ -211,8 +211,7 @@ $sql_to_target = '';
 $sql_to_original = '';
 /* string to hold SQL statements to restore indexes on text fields */
 $sql_restore_indexes = '';
-/* string to hold SQL statements to restore fields null and default values. */
-$sql_fix_fields = '';
+
 /* string to hold SQL statements to restore compound indexes. */
 $sql_restore_multiples = '';
 
@@ -359,9 +358,7 @@ if (count($tables) > 0) {
 
                         /* Create SQL to restore comments, UNIQUE, DEFAULT, and NOT NULL  */
                         if (!empty($field->Null) || !empty($field->Default) || !empty($field->Comment)) {
-                            /*$fix = "\nALTER TABLE " . $table . " MODIFY " . '`' . $field->Field .
-                                '`' . " " . $field->Type . " CHARACTER SET " . $targetCharset .
-                                " COLLATE " . $targetCollation;*/
+
                             if ($field->Null == 'NO') {
                                 $sql_to_original .= ' NOT NULL';
                             }
@@ -388,7 +385,7 @@ if (count($tables) > 0) {
                             /* add terminator */
                             $sql_to_original .= ';';
                             /* add final result to the array */
-                            $sql_fix_fields .= '' ; // $fix;
+
 
                         }
 
@@ -515,7 +512,7 @@ foreach ($tables as $table => $fields) {
 
 $complete_sql = $sql_drop_indexes . $sql_to_blob . "\nALTER DATABASE " .
     $dbName . " CHARSET " . $targetCharset . " COLLATE " . $targetCollation .
-    ";" . $sql_to_target . $sql_to_original . $sql_fix_fields .
+    ";" . $sql_to_target . $sql_to_original .
     $sql_restore_indexes . $sql_restore_multiples;
 
 if ($showHeaders) {
