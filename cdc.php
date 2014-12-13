@@ -355,44 +355,44 @@ if (count($tables) > 0) {
                             $field->Field . '`' . " BLOB;";
                         $sql_to_original .= "\nALTER TABLE " . $table . " MODIFY " . '`' .
                             $field->Field . '`' . " " . $field->Type . " CHARACTER SET " .
-                            $targetCharset . " COLLATE " . $targetCollation . ";";
+                            $targetCharset . " COLLATE " . $targetCollation ;
 
                         /* Create SQL to restore comments, UNIQUE, DEFAULT, and NOT NULL  */
                         if (!empty($field->Null) || !empty($field->Default) || !empty($field->Comment)) {
-                            $fix = "\nALTER TABLE " . $table . " MODIFY " . '`' . $field->Field .
+                            /*$fix = "\nALTER TABLE " . $table . " MODIFY " . '`' . $field->Field .
                                 '`' . " " . $field->Type . " CHARACTER SET " . $targetCharset .
-                                " COLLATE " . $targetCollation;
+                                " COLLATE " . $targetCollation;*/
                             if ($field->Null == 'NO') {
-                                $fix .= ' NOT NULL';
+                                $sql_to_original .= ' NOT NULL';
                             }
                             if (!empty($field->Default)) {
-                                $fix .= ' DEFAULT ' . "'" . $field->Default . "'";
+                                $sql_to_original .= ' DEFAULT ' . "'" . $field->Default . "'";
                             } else {
                                 if ($field->Default === '') {
                                     /* handle defaults set to empty string */
-                                    $fix .= ' DEFAULT ' . "''";
+                                    $sql_to_original .= ' DEFAULT ' . "''";
                                 } else {
                                     if ($field->Default === NULL) {
                                         /* do nothing */
                                     } else {
                                         if ($field->Default === '0') {
                                             /* handle defaults set to '0' */
-                                            $fix .= ' DEFAULT ' . "'0'";
+                                            $sql_to_original .= ' DEFAULT ' . "'0'";
                                         }
                                     }
                                 }
                             }
                             if (!empty($field->Comment)) {
-                                $fix .= ' COMMENT ' . "'" . $field->Comment . "'";
+                                $sql_to_original .= ' COMMENT ' . "'" . $field->Comment . "'";
                             }
                             /* add terminator */
-                            $fix .= ';';
+                            $sql_to_original .= ';';
                             /* add final result to the array */
-                            $sql_fix_fields .= $fix;
+                            $sql_fix_fields .= '' ; // $fix;
 
                         }
 
-//xxx
+
                         if (!empty($field->Key) || (array_key_exists($field->Field, $multiples))) {
                             /* walk though the indexes until we find it. */
                             foreach ($res_fields_index as $item) {
