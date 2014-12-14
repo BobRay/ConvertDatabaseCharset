@@ -510,10 +510,22 @@ foreach ($tables as $table => $fields) {
         $targetCharset . " COLLATE " . $targetCollation . ";";
 }
 
-$complete_sql = $sql_drop_indexes . $sql_to_blob . "\nALTER DATABASE " .
+$complete_sql = "\n/* *************** Drop Indexes *************** */";
+$complete_sql .= $sql_drop_indexes;
+$complete_sql .= "\n/* *************** Convert Text Fields to Blob *************** */";
+$complete_sql .=  $sql_to_blob;
+$complete_sql .= "\n/* *************** Change Database Charset *************** */";
+$complete_sql .=  "\nALTER DATABASE " .
     $dbName . " CHARSET " . $targetCharset . " COLLATE " . $targetCollation .
-    ";" . $sql_to_target . $sql_to_original .
-    $sql_restore_indexes . $sql_restore_multiples;
+    ";";
+$complete_sql .= "\n/* *************** Change Table Charsets and Collations *************** */";
+$complete_sql .= $sql_to_target;
+$complete_sql .= "\n/* *************** Change Field Charsets amd Collations ****************/";
+$complete_sql .=  $sql_to_original;
+$complete_sql .= "\n/* *************** Restore Indexes *************** */";
+$complete_sql .= $sql_restore_indexes;
+$complete_sql .= "\n/* *************** Restore Compound Indexes *************** */";
+$complete_sql .= $sql_restore_multiples;
 
 if ($showHeaders) {
     $headerOutput = "Change Database Charset for DB: " . $dbName .
