@@ -385,12 +385,21 @@ if (count($tables) > 0) {
                             /* add terminator */
                             $sql_to_original .= ';';
                             /* add final result to the array */
+                        }
+                        $dropKey = false;
 
-
+                        foreach($multiples as $key => $value) {
+                            if ($key == $field->Field) {
+                                $dropKey = true;
+                                break;
+                            }
+                            if (strpos($value, $field->Field) !== false) {
+                                $dropKey = true;
+                                break;
+                            }
                         }
 
-
-                        if (!empty($field->Key) || (array_key_exists($field->Field, $multiples))) {
+                        if (!empty($field->Key) || $dropKey) {
                             /* walk though the indexes until we find it. */
                             foreach ($res_fields_index as $item) {
                                 if ($item->Column_name == $field->Field) {

@@ -12,19 +12,19 @@ and the default collation is <fixedpre>latin1_swedish_ci</fixedpre>. If your CMS
 <p>Download <a href="http://bobsguides.com/assets/cdc/cdc.zip">cdc.zip</a></p>
 
 <p>Full disclosure: I still consider character sets to be a black art, and don't can't claim to fully understand them. This script has always worked for me and for a number of others. YMMV.</p>
-
+<p>&nbsp;</p>
 <div class="box">
     <p>Upgrade note: This script was updated in December of 2014. It should no longer fail on indexes with a size setting smaller than the field size. It was tested on the database for MODX 2.3.2 and now handles the new uri index properly and the compound index on the category object. It also now skips view tables.</p>
 </div>
-
+<p>&nbsp;</p>
 <p>MODX users: This script is meant to run outside of MODX and is not recommended for use in a MODX snippet or plugin. Clear the site cache before starting. Before Exporting your database go into the Manager and empty the error log and the manager action log (not strictly necessary, but it will make it easier on the server). </p>
 
 <p>Other CMS users: Do not run this script inside your CMS &mdash; run it as a standalone script. There is nothing MODX-specific about this script and it should convert your database, but I haven't tested it with anything but MODX.</p>
-
+<p>&nbsp;</p>
 <div class="box">
     <p>Important Security Note: Be careful where you put the cdc.config.php file. It contains the credentials for logging in to your database. It's not a bad idea to delete it when you're finished converting your database.</p>
 </div>
-
+<p>&nbsp;</p>
 <h3>Quick and Daring Method</h3>
 
 <p>If you completely trust this script (not recommended), this method will give you a fast conversion to UTF-8 for your database. I would still back up the database first.</p>
@@ -43,11 +43,12 @@ and the default collation is <fixedpre>latin1_swedish_ci</fixedpre>. If your CMS
 
 </ol>
 
+<p>&nbsp;</p>
+
 <div class="box">
     <p>Whichever method you use, when backing up your original database, be sure to select the &quot;Drop Table&quot; option as described above! If you forget and have to restore your original database, you'll have to manually drop all tables in the database before Importing your backup.</p>
-
 </div>
-
+<p>&nbsp;</p>
 <h3>Safe Method (recommended)</h3>
 
 
@@ -97,11 +98,11 @@ and the default collation is <fixedpre>latin1_swedish_ci</fixedpre>. If your CMS
     <li>If there are problems you can't fix, switch back to the original database</li>
 
 </ol>
-
+<p>&nbsp;</p>
 <div class="box">
     <p>If your database is very large, the script may not complete. You can tell that has happened by looking at the structure of the database and the tables in PhpMyAdmin. You'll see some of the data as [BLOB ...] instead of the actual data. If this happens, start over by restoring the backup and paste each section of the generated SQL and execute it (the sections are separated by comments with a row of asterisks). As long as sections are run in the order that they appear in the SQL, you'll still get the complete conversion.</p>
 </div>
-
+<p>&nbsp;</p>
 <h3>Notes</h3>
 
 <p>When you compare the <fixedpre>original-latin1.sql</fixedpre> and the <fixedpre>after.sql</fixedpre> files, you should see differences in the date and time line at the top and in the charset specifications. You may see that the order of some of the indexes has changed. This is normal and unavoidable. As long as they're all there, it's not a problem. It happens because the script has to drop some indexes and add them back. When they're added back, they may go at the end of the indexes. The actual fields in the tables should not have changed.</p>
