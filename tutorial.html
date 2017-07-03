@@ -7,9 +7,9 @@ and the default collation is <fixedpre>latin1_swedish_ci</fixedpre>. If your CMS
 
 <p>I've tried converting databases from latin1 to utf8 several times over the last two years using various scripts available on the web. I had no great success and often a lot of grief. Most existing scripts do the conversion but require you to drop and restore indexes manually and often lose comments and some field characteristics (e.g. NOT NULL, UNIQUE, DEFAULT).</p>
 
-<p>I finally wrote <a href="http://bobsguides.com/assets/cdc/cdc.zip">my own script</a> to do it. The script in this package should convert from any charset/collation to any other charset/collation. By default it converts the current charset/collation to utf8/utf8_general_ci. The script drops and adds the indexes automatically and preserves the field information (including compound-key indexes).</p>
+<p>I finally wrote <a href="https://bobsguides.com/assets/cdc/cdc.zip">my own script</a> to do it. The script in this package should convert from any charset/collation to any other charset/collation. By default it converts the current charset/collation to utf8/utf8_general_ci. The script drops and adds the indexes automatically and preserves the field information (including compound-key indexes).</p>
 
-<p>Download <a href="http://bobsguides.com/assets/cdc/cdc.zip">cdc.zip</a></p>
+<p>Download <a href="https://bobsguides.com/assets/cdc/cdc.zip">cdc.zip</a></p>
 
 <p>Full disclosure: I still consider character sets to be a black art, and don't can't claim to fully understand them. This script has always worked for me and for a number of others. YMMV.</p>
 <p>&nbsp;</p>
