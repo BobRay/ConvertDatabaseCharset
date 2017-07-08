@@ -3,7 +3,9 @@
 Script Name: cdc.php  (Convert Database Charset)
 
 
-@author Bob Ray (<https://bobsguides.com) 2010, updated July 2012
+@author Bob Ray <https://bobsguides.com>
+@created 2010
+@ Copyright 2010-2017 Bob Ray
 
 This PHP script is based on a script by Anders Stalheim Oefsdahl for converting a WordPress database to UTF-8. Copyright 2007  Anders Stalheim Oefsdahl  (email : anders@apt.no)
 
