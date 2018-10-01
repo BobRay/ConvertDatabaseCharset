@@ -107,6 +107,8 @@ and the default collation is <fixedpre>latin1_swedish_ci</fixedpre>. If your CMS
 
 <p>When you compare the <fixedpre>original-latin1.sql</fixedpre> and the <fixedpre>after.sql</fixedpre> files, you should see differences in the date and time line at the top and in the charset specifications. You may see that the order of some of the indexes has changed. This is normal and unavoidable. As long as they're all there, it's not a problem. It happens because the script has to drop some indexes and add them back. When they're added back, they may go at the end of the indexes. The actual fields in the tables should not have changed.</p>
 
+<p>In some versions of PhpMyAdmin, when the SQL script has finished, you'll see a message saying: &quot;<b>#MySQL returned an empty result set (i.e. zero rows)</b>&quot;. This is normal because the script doesn't retrieve any records, it just changes existing ones.</p>
+
 <h3>Remaining Problems</h3>
 
 <p>The script will safely change the character encoding and collation of your database, but you may still have problems with strange characters in the database.</p>
@@ -115,7 +117,7 @@ and the default collation is <fixedpre>latin1_swedish_ci</fixedpre>. If your CMS
 
 <p>Pasting text from Word or other text-editing programs may give you some unusual apostrophes and quote marks (both single and double). Word's &quot;curly&quot; quotes (aka &quot;smart quotes&quot;) are an example. Usually, you can leave these alone since most modern browsers display them correctly. Generally speaking, you shouldn't edit anything unless it causes trouble in a displayed page.</p>
 
-<p>If you have serious problems with characters that <i>do</i> show up in the display afer conversion, you may need more drastic measures to fix them.</p>
+<p>If you have serious problems with characters that <i>do</i> show up in the display after conversion, you may need more drastic measures to fix them.</p>
 
 <p>One method is to edit the Exported SQL file from the new database with a good editor (sometimes with a hex editor). Then create a new database with the proper encoding and collation and Import the SQL file to it. Don't edit anything unless you're sure you know it's wrong and what it should be. Don't edit anything but readable text.</p>
 
