@@ -9,12 +9,13 @@ and the default collation is <fixedpre>latin1_swedish_ci</fixedpre>. If your CMS
 
 <p>I finally wrote <a href="https://bobsguides.com/assets/cdc/cdc.zip">my own script</a> to do it. The script in this package should convert from any charset/collation to any other charset/collation. By default it converts the current charset/collation to utf8/utf8_general_ci. The script drops and adds the indexes automatically and preserves the field information (including compound-key indexes).</p>
 
-<p>Download <a href="https://bobsguides.com/assets/cdc/cdc.zip">cdc.zip</a></p>
-
 <p>Full disclosure: I still consider character sets to be a black art, and don't can't claim to fully understand them. This script has always worked for me and for a number of others. YMMV.</p>
 <p>&nbsp;</p>
 <div class="box">
-    <p>Upgrade note: This script was updated in December of 2014. It should no longer fail on indexes with a size setting smaller than the field size. It was tested on the database for MODX 2.3.2 and now handles the new uri index properly and the compound index on the category object. It also now skips view tables.</p>
+    <p>Upgrade note: This script was updated in October of 2018, with modifications for PHP 7. It was tested on the database for MODX 2.6.5 </p>
+
+    <p><b>Download <a href="https://bobsguides.com/assets/cdc/cdc.zip">cdc.zip</a></b></p>
+    
 </div>
 <p>&nbsp;</p>
 <p>MODX users: This script is meant to run outside of MODX and is not recommended for use in a MODX snippet or plugin. Clear the site cache before starting. Before Exporting your database go into the Manager and empty the error log and the manager action log (not strictly necessary, but it will make it easier on the server). </p>
