@@ -126,7 +126,7 @@ function getRow($ds, $mode = 'assoc')
         elseif ($mode == 'both') {
             return mysqli_fetch_array($ds, MYSQLI_BOTH);
         } else {
-            addError("Unknown get type ($mode) specified for fetchRow - must be empty, 'assoc', 'num' or 'both'.");
+            addLine($errorOutput, "Unknown get type ($mode) specified for fetchRow - must be empty, 'assoc', 'num' or 'both'.");
         }
     }
     return null;
@@ -215,10 +215,10 @@ $sql_restore_multiples = '';
 $tables = array();
 $sql_tables = "SHOW FULL TABLES";
 $res_tables = getResults($sql_tables, $connection);
-addline($debugOutput, print_r($res_tables, true));
+addLine($debugOutput, print_r($res_tables, true));
 // $cdc_debug = true;
 if ($cdc_debug) {
-    addline($debugOutput, "\nTABLES:");
+    addLine($debugOutput, "\nTABLES:");
 }
 
 $field = "Tables_in_" . $dbName;
@@ -231,7 +231,7 @@ if (is_array($res_tables)) {
         $tables[$res_table->$field] = array();
 
         if ($cdc_debug) {
-            addline($debugOutput, $res_table->$field);
+            addLine($debugOutput, $res_table->$field);
         }
     }
 }
@@ -261,11 +261,11 @@ if (count($tables) > 0) {
 
         if ($cdc_debug) {
 
-            addline($debugOutput, "\nRES FIELDS:\n");
-            addline($debugOutput, print_r($res_fields, true));
-            addline($debugOutput, "\n******************************************\n");
-            addline($debugOutput, "RES FIELDS INDEX\n");
-            addline($debugOutput, print_r($res_fields_index, true));
+            addLine($debugOutput, "\nRES FIELDS:\n");
+            addLine($debugOutput, print_r($res_fields, true));
+            addLine($debugOutput, "\n******************************************\n");
+            addLine($debugOutput, "RES FIELDS INDEX\n");
+            addLine($debugOutput, print_r($res_fields_index, true));
         }
 
         $fieldLength = array();
@@ -293,8 +293,8 @@ if (count($tables) > 0) {
         */
 
         if ($cdc_debug) {
-            addline($debugOutput, "\nIDX Array\n");
-            addline($debugOutput, print_r($idxs, true));
+            addLine($debugOutput, "\nIDX Array\n");
+            addLine($debugOutput, print_r($idxs, true));
         }
 
         /* create the string used for a compound index */
@@ -310,8 +310,8 @@ if (count($tables) > 0) {
 
         if ($cdc_debug) {
             if (!empty($multiples)) {
-                addline($debugOutput, $table . "\nCompound Keys:");
-                addline($debugOutput, print_r($multiples, true));
+                addLine($debugOutput, $table . "\nCompound Keys:");
+                addLine($debugOutput, print_r($multiples, true));
             }
         }
         unset($idxs);
@@ -326,7 +326,7 @@ if (count($tables) > 0) {
 
         if (is_array($res_fields)) {
             if ($cdc_debug) {
-                addline($debugOutput, "\nTEXT FIELDS:");
+                addLine($debugOutput, "\nTEXT FIELDS:");
             }
             $done = array();
             foreach ($res_fields as $field) {
@@ -342,7 +342,7 @@ if (count($tables) > 0) {
                     case strpos(strtolower($field->Type), 'longtext') === 0:
                         $tables[$table][$field->Field] = $field->Type;
                         if ($cdc_debug) {
-                            addline($debugOutput, 'Field: ' . $field->Field . " " . $field->Type . ', Key:' . $field->Key);
+                            addLine($debugOutput, 'Field: ' . $field->Field . " " . $field->Type . ', Key:' . $field->Key);
                         }
 
                         /* add SQL to convert field to BLOB and back again */
@@ -405,7 +405,7 @@ if (count($tables) > 0) {
                                     /* set this for use with keys that have a size set */
                                     $length = $item->Sub_part;
                                     if ($cdc_debug) {
-                                        addline($debugOutput, ", indexName = " . $key . ", ColumnName=" . $column . "\n");
+                                        addLine($debugOutput, ", indexName = " . $key . ", ColumnName=" . $column . "\n");
                                     }
                                     break;
                                 }
@@ -502,8 +502,8 @@ if (count($tables) > 0) {
 } /* end if( count( $tables )>0 ) */
 
 if ($cdc_debug) {
-    addline($debugOutput, "\nMULTIPLES:");
-    addline($debugOutput, print_r($multiples, true) . "\n\n");
+    addLine($debugOutput, "\nMULTIPLES:");
+    addLine($debugOutput, print_r($multiples, true) . "\n\n");
 }
 
 unset($res_fields,$res_fields_index, $res_table, $res_tables,$multiples);
