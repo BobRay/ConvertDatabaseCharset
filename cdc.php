@@ -77,7 +77,7 @@ function getResults($sql, $connection)
 {
     /* @var $result object */
     $final = array();
-    $result = mysql_query($sql, $connection);
+    $result = mysqli_query($connection, $sql);
 
     $num_rows = 0;
     $row = null;
@@ -111,20 +111,20 @@ function hasDuplicate($arr, $keyname)
 /**
  * Fetch a row or object  as an associative array
  *
- * @param $ds object - query result object
+ * @param $ds mysqli_result - query result object
  * @param string $mode
- * @return object - (returns null on failure)
+ * @return mixed - (returns null on failure)
  */
 function getRow($ds, $mode = 'assoc')
 {
     if ($ds) {
         if ($mode == 'assoc') {
-            return mysql_fetch_object($ds);
+            return mysqli_fetch_object($ds);
         } elseif ($mode == 'num') {
-            return mysql_fetch_row($ds);
+            return mysqli_fetch_row($ds);
         }
         elseif ($mode == 'both') {
-            return mysql_fetch_array($ds, MYSQL_BOTH);
+            return mysqli_fetch_array($ds, MYSQLI_BOTH);
         } else {
             addError("Unknown get type ($mode) specified for fetchRow - must be empty, 'assoc', 'num' or 'both'.");
         }
@@ -160,8 +160,7 @@ function doCompound($idxs, $multiples, $keyName)
  * @param $target string - one of the three strings above
  * @param $msg string - text to add
  */
-function addLine(&$target, $msg)
-{
+function addLine(&$target, $msg) {
     $target .= $msg . "\n";
 }
 
@@ -192,15 +191,10 @@ addLine($headerOutput, "DB name: " . $dbName . "\n");
 
 
 /* connect and select DB */
-$connection = mysql_connect($host, $userName, $password, true);
+$connection = mysqli_connect($host, $userName, $password, $dbName);
 if (!$connection) {
     die('Failed to connect to database');
 }
-
-if (!@ mysql_select_db($dbName)) {
-    die('Failed to select the database ' . $dbName);
-}
-
 
 /* *********************************************************** */
 /* string to hold SQL statements to drop indexes on text fields */
@@ -513,7 +507,7 @@ if ($cdc_debug) {
 }
 
 unset($res_fields,$res_fields_index, $res_table, $res_tables,$multiples);
-mysql_close($connection);
+mysqli_close($connection);
 
 
 foreach ($tables as $table => $fields) {
